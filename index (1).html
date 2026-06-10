@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC2 Pilecap Designer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --bg2:       #181c26;
+    --bg3:       #1e2333;
+    --border:    rgba(255,255,255,0.09);
+    --border2:   rgba(255,255,255,0.16);
+    --text:      #e8eaf0;
+    --text2:     #9ba3b8;
+    --text3:     #6b7490;
+    --amber:     #f0a500;
+    --amber-dim: rgba(240,165,0,0.12);
+    --green:     #3dba6e;
+    --green-dim: rgba(61,186,110,0.12);
+    --red:       #e05050;
+    --red-dim:   rgba(224,80,80,0.12);
+    --warn:      #e0a030;
+    --warn-dim:  rgba(224,160,48,0.12);
+    --mono:      'JetBrains Mono', 'Fira Mono', 'Consolas', monospace;
+    --sans:      'Inter', system-ui, sans-serif;
+    --radius:    8px;
+    --radius-lg: 12px;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--amber-dim);
+    border: 0.5px solid var(--amber);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .header-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border: 0.5px solid var(--border2);
+    border-radius: 4px;
+    color: var(--text2);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Layout ── */
+  .app-wrap {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: calc(100vh - 53px);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 0.5px solid var(--border);
+    overflow-y: auto;
+    padding: 0 0 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-section {
+    padding: 16px 16px 0;
+    margin-bottom: 4px;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 0 8px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 4px;
+    font-family: var(--mono);
+  }
+  .field input, .field select {
+    width: 100%;
+    height: 32px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 0 10px;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--amber);
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7490' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+    cursor: pointer;
+  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* ── Main panel ── */
+  .main-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg2);
+    padding: 0 20px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .tab {
+    padding: 11px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    transition: color 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── Metric cards ── */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+  }
+  .metric-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .metric-val {
+    font-size: 22px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .metric-unit { font-size: 12px; color: var(--text3); font-weight: 400; margin-left: 2px; }
+  .c-pass { color: var(--green); }
+  .c-fail { color: var(--red); }
+  .c-warn { color: var(--warn); }
+  .c-amber { color: var(--amber); }
+
+  /* ── Diagram ── */
+  .diagram-wrap {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* ── Results table ── */
+  .res-section { margin-bottom: 20px; }
+  .res-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .res-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .res-table td {
+    padding: 8px 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .res-table tr:last-child td { border-bottom: none; }
+  .res-table td:first-child { color: var(--text2); width: 58%; }
+  .res-table td:last-child { font-family: var(--mono); text-align: right; }
+
+  /* ── Check list ── */
+  .check-list {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .check-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 12px;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-name { color: var(--text2); }
+  .check-right { display: flex; align-items: center; gap: 10px; }
+  .check-util { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .badge {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+  }
+  .badge-pass { background: var(--green-dim); color: var(--green); border: 0.5px solid rgba(61,186,110,0.3); }
+  .badge-fail { background: var(--red-dim); color: var(--red); border: 0.5px solid rgba(224,80,80,0.3); }
+  .badge-warn { background: var(--warn-dim); color: var(--warn); border: 0.5px solid rgba(224,160,48,0.3); }
+
+  /* ── Note / warning boxes ── */
+  .note {
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text2);
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .warn-box {
+    font-size: 11px;
+    color: var(--warn);
+    background: var(--warn-dim);
+    border: 0.5px solid rgba(224,160,48,0.35);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    margin-bottom: 12px;
+  }
+  .overall-banner {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+  }
+  .banner-pass { background: var(--green-dim); color: var(--green); border: 0.5px solid rgba(61,186,110,0.35); }
+  .banner-fail { background: var(--red-dim); color: var(--red); border: 0.5px solid rgba(224,80,80,0.35); }
+
+  /* ── Footer ── */
+  footer {
+    padding: 10px 24px;
+    border-top: 0.5px solid var(--border);
+    font-size: 10px;
+    color: var(--text3);
+    background: var(--bg2);
+    text-align: center;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 700px) {
+    .app-wrap { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; overflow: visible; }
+    .sidebar { height: auto; overflow: visible; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .main-panel { height: calc(100vh - 53px); }
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <span class="logo-icon">⬡</span>
+    EC2 Pilecap Designer
+  </a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="header-badge">EC2-1-1 · UK NA</span>
+    <button onclick="exportReport()" style="height:30px;padding:0 14px;font-size:12px;font-weight:500;font-family:var(--mono);background:var(--amber-dim);border:0.5px solid var(--amber);border-radius:6px;color:var(--amber);cursor:pointer;letter-spacing:0.03em;transition:background 0.15s" onmouseover="this.style.background='rgba(240,165,0,0.22)'" onmouseout="this.style.background='var(--amber-dim)'">&#11015; Export Report</button>
+  </div>
+</header>
+
+<div class="app-wrap">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="section-label">Project</div>
+      <div class="field"><label>Project name</label><input id="projName" type="text" placeholder="e.g. New Road Bridge" style="font-family:var(--sans)"></div>
+      <div class="field-row">
+        <div class="field"><label>Job number</label><input id="jobNo" type="text" placeholder="e.g. 2025-001" style="font-family:var(--sans)"></div>
+        <div class="field"><label>Element ref.</label><input id="elemRef" type="text" placeholder="e.g. PC-01" style="font-family:var(--sans)"></div>
+      </div>
+      <div class="field"><label>Engineer</label><input id="engName" type="text" placeholder="Name" style="font-family:var(--sans)"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Pile arrangement</div>
+      <div class="field">
+        <label>Number of piles</label>
+        <select id="nPiles" onchange="calc()">
+          <option value="2">2-pile cap</option>
+          <option value="3">3-pile cap</option>
+          <option value="4" selected>4-pile cap</option>
+          <option value="6">6-pile cap</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>φ pile (mm)</label><input id="pileDia" type="number" value="450" min="100" max="2000" onchange="calc()"></div>
+        <div class="field"><label>Spacing s (mm)</label><input id="pileSpacing" type="number" value="1350" min="300" max="5000" onchange="calc()"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Column &amp; loads</div>
+      <div class="field-row">
+        <div class="field"><label>c₁ width (mm)</label><input id="colW" type="number" value="400" min="100" max="2000" onchange="calc()"></div>
+        <div class="field"><label>c₂ depth (mm)</label><input id="colD" type="number" value="400" min="100" max="2000" onchange="calc()"></div>
+      </div>
+      <div class="field"><label>N<sub>Ed</sub> (kN)</label><input id="NEd" type="number" value="3000" onchange="calc()"></div>
+      <div class="field-row">
+        <div class="field"><label>M<sub>Ed,x</sub> (kNm)</label><input id="MEdx" type="number" value="0" onchange="calc()"></div>
+        <div class="field"><label>M<sub>Ed,y</sub> (kNm)</label><input id="MEdy" type="number" value="0" onchange="calc()"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Materials</div>
+      <div class="field">
+        <label>Concrete class</label>
+        <select id="concClass" onchange="calc()">
+          <option value="25">C25/30</option>
+          <option value="30" selected>C30/37</option>
+          <option value="35">C35/45</option>
+          <option value="40">C40/50</option>
+          <option value="50">C50/60</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Reinforcement</label>
+        <select id="rebarClass" onchange="calc()">
+          <option value="500" selected>B500B (f<sub>yk</sub> = 500 MPa)</option>
+          <option value="460">B460B (f<sub>yk</sub> = 460 MPa)</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Cover c<sub>nom</sub> (mm)</label><input id="cover" type="number" value="75" min="25" max="150" onchange="calc()"></div>
+        <div class="field"><label>Bar dia. (mm)</label><input id="barDia" type="number" value="25" min="10" max="40" onchange="calc()"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Cap geometry</div>
+      <div class="field"><label>Cap depth h (mm)</label><input id="capH" type="number" value="800" min="200" max="3000" onchange="calc()"></div>
+      <div class="field"><label>Pile capacity R<sub>d</sub> (kN)</label><input id="pileRd" type="number" value="1000" min="50" onchange="calc()"></div>
+    </div>
+
+  </aside>
+
+  <!-- ── Main panel ── -->
+  <div class="main-panel">
+    <nav class="tabs">
+      <button class="tab active" onclick="showTab('diagram',this)">Diagram</button>
+      <button class="tab" onclick="showTab('flexure',this)">Flexure</button>
+      <button class="tab" onclick="showTab('shear',this)">Shear</button>
+      <button class="tab" onclick="showTab('summary',this)">Summary</button>
+    </nav>
+
+    <div class="content">
+
+      <!-- DIAGRAM TAB -->
+      <div id="tab-diagram" class="tab-pane active">
+        <div class="metrics-row" id="top-metrics"></div>
+        <div class="diagram-wrap">
+          <svg id="cap-svg" width="380" height="380" viewBox="0 0 380 380" style="display:block"></svg>
+        </div>
+      </div>
+
+      <!-- FLEXURE TAB -->
+      <div id="tab-flexure" class="tab-pane">
+        <div class="note">
+        Flexure design uses the <strong>strut-and-tie method</strong> per EC2 Annex J.
+          Tension tie force: F<sub>td</sub> = (N<sub>Ed</sub>/2) × (pile CL − (φ/2 − 150)) / d,
+          taking the critical section at <strong>150mm inside the pile face</strong> (UK practice per CIRIA C108).
+          Strut angle θ must be ≥ 21.8° per EC2 J.2.
+        </div>
+        <div id="flex-content"></div>
+      </div>
+
+      <!-- SHEAR TAB -->
+      <div id="tab-shear" class="tab-pane">
+        <div class="note">
+          <strong>Punching shear</strong> checked at the 2d control perimeter (EC2 §6.4.3).
+          <strong>Beam shear</strong> at critical section with enhanced shear for short spans a<sub>v</sub>/2d (EC2 §6.2.2(6)).
+        </div>
+        <div id="shear-content"></div>
+      </div>
+
+      <!-- SUMMARY TAB -->
+      <div id="tab-summary" class="tab-pane">
+        <div id="summary-content"></div>
+        <div class="note">
+          <strong>Design basis:</strong> BS EN 1992-1-1:2004 (EC2) + UK National Annex.
+          Strut-and-tie model per Annex J. Pile forces by elastic rigid-cap analysis.
+          Punching shear: §6.4.3. Beam shear: §6.2.2 with short-span enhancement.
+          γ<sub>c</sub> = 1.5, γ<sub>s</sub> = 1.15.<br><br>
+          ⚠ <strong>This tool provides indicative design results only.</strong>
+          All designs must be verified and signed off by a chartered structural engineer
+          before construction.
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      EC2 Pilecap Designer · BS EN 1992-1-1:2004 + UK NA · For indicative use only — verify with a chartered engineer
+    </footer>
+  </div>
+
+</div>
+
+<script>
+function exportReport() {
+  const r = window._rd;
+  if (!r) { alert('Run a calculation first.'); return; }
+  const f = n => (isFinite(n) ? n : 0);
+  const fmt2 = (n,dp=1) => isFinite(n) ? Number(n).toFixed(dp) : '—';
+
+  // Build SVG cap diagram (light version for print)
+  function capSVG() {
+    const W=340,H=280,pad=36;
+    const maxDim=Math.max(r.Lx,r.Ly);
+    const sc=(Math.min(W,H)-2*pad)/maxDim;
+    const tx=x=>W/2+x*sc, ty=y=>H/2+y*sc;
+    const n=r.nPiles;
+    let pcs=[];
+    const s=r.s,phi=r.phi;
+    if(n===2){pcs=[[-s/2,0],[s/2,0]];}
+    else if(n===3){const rv=s/Math.sqrt(3);pcs=[[0,-rv],[-s/2,rv/2],[s/2,rv/2]];}
+    else if(n===4){pcs=[[-s/2,-s/2],[s/2,-s/2],[s/2,s/2],[-s/2,s/2]];}
+    else{pcs=[[-s,-s/2],[0,-s/2],[s,-s/2],[-s,s/2],[0,s/2],[s,s/2]];}
+    let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto">`;
+    svg+=`<rect x="${tx(-r.Lx/2)}" y="${ty(-r.Ly/2)}" width="${r.Lx*sc}" height="${r.Ly*sc}" rx="4" fill="#f5f5f2" stroke="#444" stroke-width="1.5"/>`;
+    svg+=`<rect x="${tx(-r.c1/2)}" y="${ty(-r.c2/2)}" width="${r.c1*sc}" height="${r.c2*sc}" rx="2" fill="#fff8e8" stroke="#c07000" stroke-width="1.5"/>`;
+    svg+=`<text x="${W/2}" y="${H/2+1}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="#c07000" font-family="monospace">col</text>`;
+    pcs.forEach((p,i)=>{
+      const px=tx(p[0]),py=ty(p[1]),rv=Math.max(phi*sc/2,8);
+      const F=r.pileForces[i],util=F/r.Rd;
+      const col=F<0?'#c00':(util>1?'#c00':(util>0.85?'#b06000':'#1a7a3a'));
+      svg+=`<circle cx="${px}" cy="${py}" r="${rv}" fill="${col}22" stroke="${col}" stroke-width="1.5"/>`;
+      svg+=`<text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="central" font-size="8" fill="${col}" font-family="monospace">P${i+1}</text>`;
+      svg+=`<text x="${px}" y="${py-rv-4}" text-anchor="middle" font-size="8" fill="${col}" font-family="monospace">${F.toFixed(0)}kN</text>`;
+    });
+    // dim line
+    const dy=ty(r.Ly/2)+14;
+    svg+=`<line x1="${tx(-r.Lx/2)}" y1="${dy}" x2="${tx(r.Lx/2)}" y2="${dy}" stroke="#aaa" stroke-width="0.5"/>`;
+    svg+=`<text x="${W/2}" y="${dy+10}" text-anchor="middle" font-size="8" fill="#888" font-family="monospace">${(r.Lx/1000).toFixed(2)}m × ${(r.Ly/1000).toFixed(2)}m</text>`;
+    svg+=`</svg>`;
+    return svg;
+  }
+
+  const checks=[
+    {name:'Pile force ≤ R<sub>d</sub>',       util:r.maxPile/r.Rd,        pass:r.maxPile<=r.Rd},
+    {name:'Tension tie reinforcement (x)',     util:r.As_util,              pass:r.As_util<=1},
+    {name:'Strut angle ≥ 21.8°',               util:21.8/r.theta_strut,    pass:r.theta_strut>=21.8},
+    {name:'Strut capacity',                    util:r.strut_util,           pass:r.strut_util<=1},
+    {name:'Punching shear (EC2 §6.4)',         util:r.punch_util,           pass:r.punch_util<=1},
+    {name:'Beam shear — enhanced (EC2 §6.2)', util:r.beam_util,            pass:r.beam_util<=1},
+  ];
+
+  const passColor='#1a6e3a', failColor='#b00000';
+  const passStyle=`color:${passColor};background:#e8f5ec;border:1px solid #b0ddc0;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;font-family:monospace`;
+  const failStyle=`color:${failColor};background:#fdecea;border:1px solid #f5b8b8;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;font-family:monospace`;
+
+  const html=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EC2 Pilecap Design Report — ${r.elemRef}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:28px 36px;max-width:780px;margin:0 auto}
+  @media print{body{padding:0 24px}@page{margin:18mm 14mm}}
+  h1{font-size:17px;font-weight:700;letter-spacing:-0.01em;margin-bottom:2px}
+  h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid #ddd}
+  .header-block{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a1a1a;padding-bottom:12px;margin-bottom:18px}
+  .proj-meta{font-size:10px;color:#555;line-height:1.8}
+  .proj-meta strong{color:#1a1a1a}
+  .overall{display:inline-block;padding:4px 14px;border-radius:4px;font-size:12px;font-weight:700;font-family:monospace;letter-spacing:0.06em;margin-bottom:16px}
+  .overall.pass{background:#e8f5ec;color:${passColor};border:1px solid #b0ddc0}
+  .overall.fail{background:#fdecea;color:${failColor};border:1px solid #f5b8b8}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;margin-bottom:12px}
+  table td{padding:4px 8px;border-bottom:0.5px solid #e8e8e8;vertical-align:top}
+  table td:first-child{color:#555;width:60%}
+  table td:last-child{font-family:monospace;text-align:right;font-size:11px}
+  .check-table td{padding:4px 8px;border-bottom:0.5px solid #e8e8e8}
+  .check-table td:nth-child(2){font-family:monospace;text-align:right;color:#555;font-size:10px}
+  .check-table td:last-child{text-align:right;width:60px}
+  .note{font-size:9.5px;color:#666;line-height:1.6;background:#f8f8f5;border:0.5px solid #ddd;border-radius:4px;padding:8px 10px;margin-top:14px}
+  .diagram-cell{text-align:center;padding:10px 0}
+  .watermark{position:fixed;bottom:18px;right:24px;font-size:9px;color:#bbb;font-family:monospace}
+  @media print{.watermark{position:fixed}}
+</style>
+</head>
+<body>
+
+<div class="header-block">
+  <div>
+    <h1>Pilecap Design Report</h1>
+    <div style="font-size:10px;color:#777;margin-top:2px">BS EN 1992-1-1:2004 (EC2) + UK National Annex</div>
+  </div>
+  <div class="proj-meta">
+    <div><strong>Project:</strong> ${r.projName}</div>
+    <div><strong>Job No.:</strong> ${r.jobNo}</div>
+    <div><strong>Element:</strong> ${r.elemRef}</div>
+    <div><strong>Engineer:</strong> ${r.engName}</div>
+    <div><strong>Date:</strong> ${r.date}</div>
+  </div>
+</div>
+
+<div class="overall ${r.allPass?'pass':'fail'}">${r.allPass?'✓ ALL CHECKS PASS':'✗ ONE OR MORE CHECKS FAIL — REVISE DESIGN'}</div>
+
+<h2>1. Design inputs</h2>
+<div class="two-col">
+  <div>
+    <table>
+      <tr><td>Pile arrangement</td><td>${r.nPiles}-pile cap</td></tr>
+      <tr><td>Pile diameter φ</td><td>${r.phi} mm</td></tr>
+      <tr><td>Pile spacing (c/c)</td><td>${r.s} mm</td></tr>
+      <tr><td>Column width c₁</td><td>${r.c1} mm</td></tr>
+      <tr><td>Column depth c₂</td><td>${r.c2} mm</td></tr>
+      <tr><td>Cap depth h</td><td>${r.h} mm</td></tr>
+    </table>
+  </div>
+  <div>
+    <table>
+      <tr><td>N<sub>Ed</sub></td><td>${fmt2(r.NEd,0)} kN</td></tr>
+      <tr><td>M<sub>Ed,x</sub></td><td>${fmt2(r.MEdx,0)} kNm</td></tr>
+      <tr><td>M<sub>Ed,y</sub></td><td>${fmt2(r.MEdy,0)} kNm</td></tr>
+      <tr><td>Concrete class</td><td>C${r.fck}/— (f<sub>cd</sub> = ${fmt2(r.fcd,1)} MPa)</td></tr>
+      <tr><td>f<sub>yk</sub></td><td>${r.fyk} MPa (f<sub>yd</sub> = ${fmt2(r.fyd,1)} MPa)</td></tr>
+      <tr><td>Cover c<sub>nom</sub></td><td>${r.cover} mm</td></tr>
+      <tr><td>Bar diameter</td><td>${r.barDia} mm</td></tr>
+      <tr><td>Pile capacity R<sub>d</sub></td><td>${fmt2(r.Rd,0)} kN</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>2. Cap geometry</h2>
+<div class="two-col">
+  <div>
+    <table>
+      <tr><td>Plan L<sub>x</sub></td><td>${fmt2(r.Lx,0)} mm (${fmt2(r.Lx/1000,2)} m)</td></tr>
+      <tr><td>Plan L<sub>y</sub></td><td>${fmt2(r.Ly,0)} mm (${fmt2(r.Ly/1000,2)} m)</td></tr>
+      <tr><td>Depth h</td><td>${r.h} mm</td></tr>
+      <tr><td>Effective depth d</td><td>${fmt2(r.d,0)} mm</td></tr>
+      <tr><td>Estimated self-weight</td><td>${fmt2(r.selfWt,1)} kN</td></tr>
+    </table>
+  </div>
+  <div class="diagram-cell">
+    ${capSVG()}
+  </div>
+</div>
+
+<h2>3. Pile forces</h2>
+<table>
+  <tr><td>Max pile force</td><td class="${r.maxPile<=r.Rd?'':''}"><strong>${fmt2(r.maxPile,1)} kN</strong> (util. ${fmt2(r.maxPile/r.Rd*100,1)}%)</td></tr>
+  <tr><td>Min pile force</td><td>${fmt2(r.minPile,1)} kN ${r.minPile<0?'⚠ TENSION':''}</td></tr>
+  <tr><td>Pile capacity R<sub>d</sub></td><td>${fmt2(r.Rd,0)} kN</td></tr>
+</table>
+${r.pileForces.map((F,i)=>`<div style="display:inline-block;margin:2px 6px 2px 0;font-family:monospace;font-size:10px;padding:2px 8px;border:0.5px solid #ddd;border-radius:3px;background:#fafaf8">P${i+1}: ${F.toFixed(1)} kN</div>`).join('')}
+
+<h2>4. Flexure — strut-and-tie (EC2 Annex J)</h2>
+<div class="two-col">
+  <div>
+    <table>
+      <tr><td>Critical section arm (pile CL − (φ/2 − 150))</td><td>${fmt2(r.lxFace,0)} mm</td></tr>
+      <tr><td>Design tie force F<sub>td</sub></td><td>${fmt2(r.Ftd,1)} kN</td></tr>
+      <tr><td>Required A<sub>s</sub></td><td>${fmt2(r.As_x_req,0)} mm²</td></tr>
+      <tr><td>Min A<sub>s</sub> (0.13% b·d)</td><td>${fmt2(r.As_min,0)} mm²</td></tr>
+      <tr><td>Design A<sub>s</sub> (governing)</td><td>${fmt2(r.As_design,0)} mm²</td></tr>
+    </table>
+  </div>
+  <div>
+    <table>
+      <tr><td>Bars provided (x-dir)</td><td>${r.nBars} × T${r.barDia}</td></tr>
+      <tr><td>A<sub>s,prov</sub></td><td>${fmt2(r.As_prov,0)} mm²</td></tr>
+      <tr><td>Utilisation</td><td><strong>${fmt2(r.As_util*100,1)}%</strong></td></tr>
+      <tr><td>Strut angle θ</td><td>${fmt2(r.theta_strut,1)}°</td></tr>
+      <tr><td>f<sub>cd,eff</sub> (strut)</td><td>${fmt2(r.fcd_eff,2)} MPa</td></tr>
+      <tr><td>Strut utilisation</td><td>${fmt2(r.strut_util*100,1)}%</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>5. Shear</h2>
+<div class="two-col">
+  <div>
+    <strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#555">Punching shear — EC2 §6.4.3</strong>
+    <table style="margin-top:6px">
+      <tr><td>Control perimeter u₁</td><td>${fmt2(r.u1,0)} mm</td></tr>
+      <tr><td>v<sub>Ed</sub></td><td>${fmt2(r.vEd_punch,3)} MPa</td></tr>
+      <tr><td>Size factor k</td><td>${fmt2(r.k_punch,3)}</td></tr>
+      <tr><td>ρ<sub>l</sub></td><td>${fmt2(r.rho_l*100,3)}%</td></tr>
+      <tr><td>v<sub>Rd,c</sub></td><td>${fmt2(r.vRd_c,3)} MPa</td></tr>
+      <tr><td>Utilisation</td><td><strong>${fmt2(r.punch_util*100,1)}%</strong></td></tr>
+    </table>
+  </div>
+  <div>
+    <strong style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#555">Beam shear — EC2 §6.2.2</strong>
+    <table style="margin-top:6px">
+      <tr><td>Shear span a<sub>v</sub></td><td>${fmt2(Math.max(r.av,0),0)} mm</td></tr>
+      <tr><td>Enhancement factor β</td><td>${fmt2(r.beta_shear,3)}</td></tr>
+      <tr><td>v<sub>Ed</sub> (enhanced)</td><td>${fmt2(r.vEd_beam*r.beta_shear,3)} MPa</td></tr>
+      <tr><td>v<sub>Rd,c</sub></td><td>${fmt2(r.vRd_c_beam,3)} MPa</td></tr>
+      <tr><td>Utilisation</td><td><strong>${fmt2(r.beam_util*100,1)}%</strong></td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>6. Design check summary</h2>
+<table class="check-table">
+  <thead><tr style="background:#f5f5f2"><td><strong>Check</strong></td><td style="text-align:right"><strong>Utilisation</strong></td><td style="text-align:right"><strong>Result</strong></td></tr></thead>
+  <tbody>
+    ${checks.map(c=>`<tr><td>${c.name}</td><td>${fmt2(c.util*100,1)}%</td><td><span style="${c.pass?passStyle:failStyle}">${c.pass?'PASS':'FAIL'}</span></td></tr>`).join('')}
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Design basis:</strong> BS EN 1992-1-1:2004 (EC2) + UK National Annex. Partial factors: γ<sub>c</sub> = 1.5, γ<sub>s</sub> = 1.15.
+  Strut-and-tie model per EC2 Annex J; critical section at 150mm inside pile face (CIRIA C108).
+  Pile forces by elastic rigid-cap analysis. Punching shear per §6.4.3 at 2d control perimeter.
+  Beam shear per §6.2.2 with short-span enhancement. Cap extends 150mm beyond pile face on all sides.<br><br>
+  <strong>⚠ Disclaimer:</strong> This report is produced by an automated tool for indicative purposes only.
+  All designs must be independently checked and signed off by a chartered structural engineer before use in construction.
+  Generated by EC2 Pilecap Designer on ${r.date}.
+</div>
+
+<div class="watermark">EC2 Pilecap Designer · indicative use only</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ref = r.elemRef && r.elemRef !== '—' ? r.elemRef.replace(/[^a-zA-Z0-9-_]/g,'_') : 'pilecap';
+  a.download = `EC2_Pilecap_Report_${ref}_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function vi(id) { return parseInt(document.getElementById(id).value) || 0; }
+function fmt(n, dp=1) { return isFinite(n) ? n.toFixed(dp) : '—'; }
+
+function calc() {
+  const nPiles     = vi('nPiles');
+  const phi        = v('pileDia');
+  const s          = v('pileSpacing');
+  const c1         = v('colW');
+  const c2         = v('colD');
+  const NEd        = v('NEd');
+  const MEdx       = v('MEdx');
+  const MEdy       = v('MEdy');
+  const fckN       = vi('concClass');
+  const fyk        = vi('rebarClass');
+  const cover      = v('cover');
+  const barDia     = v('barDia');
+  const h          = v('capH');
+  const Rd         = v('pileRd');
+
+  // ── Material properties ──
+  const gammaC = 1.5, gammaS = 1.15;
+  const fck  = fckN;
+  const fcd  = fck / gammaC;
+  const fctm = fck <= 50 ? 0.30 * Math.pow(fck, 2/3) : 2.12 * Math.log(1 + fck/10);
+  const fyd  = fyk / gammaS;
+
+  // ── Pile layout ──
+  let pileCoords = [];
+  if (nPiles === 2) {
+    pileCoords = [[-s/2, 0], [s/2, 0]];
+  } else if (nPiles === 3) {
+    const r = s / Math.sqrt(3);
+    pileCoords = [
+      [0,           -r],
+      [-s/2,         r/2],
+      [ s/2,         r/2]
+    ];
+  } else if (nPiles === 4) {
+    pileCoords = [[-s/2,-s/2],[s/2,-s/2],[s/2,s/2],[-s/2,s/2]];
+  } else { // 6
+    pileCoords = [
+      [-s,-s/2],[0,-s/2],[s,-s/2],
+      [-s, s/2],[0, s/2],[s, s/2]
+    ];
+  }
+
+  // ── Cap plan dims ── (pile c/c range + 1 pile dia + 2 × 150mm edge overhang)
+  const xs = pileCoords.map(p=>p[0]);
+  const ys = pileCoords.map(p=>p[1]);
+  const Lx = (Math.max(...xs) - Math.min(...xs)) + phi + 2*150;
+  const Ly = (Math.max(...ys) - Math.min(...ys)) + phi + 2*150;
+
+  // ── Pile forces (rigid cap) ──
+  const n   = pileCoords.length;
+  const Ixx = pileCoords.reduce((a,p)=>a+p[1]*p[1], 0); // mm²
+  const Iyy = pileCoords.reduce((a,p)=>a+p[0]*p[0], 0); // mm²
+
+  const pileForces = pileCoords.map(p => {
+    const fx = Iyy > 1 ? MEdy * 1e6 * p[0] / Iyy : 0;
+    const fy = Ixx > 1 ? MEdx * 1e6 * p[1] / Ixx : 0;
+    return NEd/n + fx + fy;
+  });
+
+  const maxPile = Math.max(...pileForces);
+  const minPile = Math.min(...pileForces);
+
+  // ── Effective depth ──
+  const d = h - cover - barDia;
+
+  // ── Strut-and-tie ──
+  const lx = (nPiles === 4 || nPiles === 6) ? s/2 : (nPiles === 2 ? s/2 : s/2);
+  // Critical section at 150mm inside pile face (CIRIA C108 / EC2 Annex J UK practice)
+  const lxFace = lx - (phi/2 - 150); // distance from cap centre to critical section
+
+  // Tie force (x-dir, EC2 Annex J)
+  const Ftd = (NEd / 2) * lxFace / d; // kN
+
+  // Required As
+  const As_x_req = Ftd * 1e3 / fyd; // mm²
+
+  // Min As (EC2 9.2.1.1: 0.0013·b·d)
+  const As_min = 0.0013 * Math.min(Lx, Ly) * d;
+  const As_design = Math.max(As_x_req, As_min);
+
+  // Bar provision
+  const barArea   = Math.PI * (barDia/2) ** 2;
+  const nBars     = Math.ceil(As_design / barArea);
+  const As_prov   = nBars * barArea;
+  const As_util   = As_design / As_prov;
+
+  // Strut angle
+  const theta_strut = Math.atan2(d, lx) * 180 / Math.PI;
+  const fcd_eff     = 0.6 * (1 - fck/250) * fcd;
+  const Fstrut      = (maxPile * 1e3) / Math.sin(theta_strut * Math.PI/180);
+  const sigma_strut = Fstrut / (phi*phi*Math.PI/4);
+  const strut_util  = sigma_strut / (fcd_eff * 1e3); // dimensionless
+
+  // ── Punching shear (EC2 §6.4) ──
+  const u1         = 2*(c1+c2) + 2*Math.PI*2*d;
+  const vEd_punch  = (NEd * 1e3) / (u1 * d);
+  const k_punch    = Math.min(1 + Math.sqrt(200/d), 2.0);
+  const rho_l      = Math.min(As_prov / (Math.min(Lx,Ly) * d), 0.02);
+  const vRd_c      = Math.max(
+    (0.18/gammaC) * k_punch * Math.pow(100*rho_l*fck, 1/3),
+    (0.035 * Math.pow(k_punch, 1.5) * Math.sqrt(fck)) / gammaC
+  );
+  const punch_util = vEd_punch / vRd_c;
+
+  // ── Beam shear (EC2 §6.2) ──
+  const av          = lx - c1/2 - d; // shear span from col face to d inside pile centre
+  const bw          = Math.min(Lx, Ly);
+  const VEd_beam    = (NEd * 1e3) / 2;
+  const vEd_beam    = VEd_beam / (bw * d);
+  const beta_shear  = av > 0 ? Math.min(av / (2*d), 1) : 1;
+  const vRd_c_beam  = Math.max(
+    (0.18/gammaC) * k_punch * Math.pow(100*rho_l*fck, 1/3) * (2*d / Math.max(av, d)),
+    0.035 * Math.pow(k_punch, 1.5) * Math.sqrt(fck)
+  );
+  const beam_util   = (vEd_beam * beta_shear) / vRd_c_beam;
+
+  // ── Self weight ──
+  const selfWt = Lx * Ly * h * 25e-9; // kN
+
+  // ── Store for export ──
+  window._rd = {
+    projName:document.getElementById('projName').value||'—',
+    jobNo:document.getElementById('jobNo').value||'—',
+    elemRef:document.getElementById('elemRef').value||'—',
+    engName:document.getElementById('engName').value||'—',
+    date: new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'}),
+    nPiles,phi,s,c1,c2,NEd,MEdx,MEdy,fck,fyd,fyk,cover,barDia,h,Rd,
+    d,Lx,Ly,lx,lxFace,Ftd,As_x_req,As_min,As_design,barArea,nBars,As_prov,As_util,
+    theta_strut,fcd_eff,Fstrut,sigma_strut,strut_util,
+    u1,vEd_punch,k_punch,rho_l,vRd_c,punch_util,
+    av,beta_shear,vEd_beam,vRd_c_beam,beam_util,
+    selfWt,maxPile,minPile,fcd,
+    pileForces:[...pileForces],
+    allPass: [maxPile<=Rd, As_util<=1, theta_strut>=21.8, strut_util<=1, punch_util<=1, beam_util<=1].every(Boolean)
+  };
+
+  // ── Draw ──
+  drawCap(pileCoords, phi, Lx, Ly, c1, c2, pileForces, maxPile, Rd);
+
+  // ── Top metrics ──
+  const pileColor = maxPile <= Rd ? 'c-pass' : 'c-fail';
+  document.getElementById('top-metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Max pile force</div>
+      <div class="metric-val ${pileColor}">${fmt(maxPile,0)}<span class="metric-unit">kN</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pile capacity R<sub>d</sub></div>
+      <div class="metric-val c-amber">${fmt(Rd,0)}<span class="metric-unit">kN</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pile utilisation</div>
+      <div class="metric-val ${maxPile/Rd<=1?'c-pass':'c-fail'}">${fmt(maxPile/Rd*100,1)}<span class="metric-unit">%</span></div>
+    </div>
+  `;
+
+  // ── Flexure tab ──
+  document.getElementById('flex-content').innerHTML = `
+    <div class="res-section">
+      <div class="res-title">Tie design (x-direction)</div>
+      <table class="res-table">
+        <tr><td>Effective depth d</td><td>${fmt(d,0)} mm</td></tr>
+        <tr><td>Critical section arm (pile CL − (φ/2 − 150))</td><td>${fmt(lxFace,0)} mm</td></tr>
+        <tr><td>Design tie force F<sub>td</sub></td><td>${fmt(Ftd,1)} kN</td></tr>
+        <tr><td>Required A<sub>s</sub></td><td>${fmt(As_x_req,0)} mm²</td></tr>
+        <tr><td>Min A<sub>s</sub> (0.13% b·d)</td><td>${fmt(As_min,0)} mm²</td></tr>
+        <tr><td>Design A<sub>s</sub> (governing)</td><td>${fmt(As_design,0)} mm²</td></tr>
+      </table>
+    </div>
+    <div class="res-section">
+      <div class="res-title">Reinforcement provision</div>
+      <table class="res-table">
+        <tr><td>Bar diameter</td><td>${barDia} mm</td></tr>
+        <tr><td>Area per bar</td><td>${fmt(barArea,0)} mm²</td></tr>
+        <tr><td>Bars required (x-dir)</td><td>${nBars}</td></tr>
+        <tr><td>A<sub>s,prov</sub></td><td>${fmt(As_prov,0)} mm²</td></tr>
+        <tr><td>Utilisation</td><td class="${As_util<=1?'c-pass':'c-fail'}">${fmt(As_util*100,1)}%</td></tr>
+        <tr><td>f<sub>yd</sub></td><td>${fmt(fyd,1)} MPa</td></tr>
+      </table>
+    </div>
+    <div class="res-section">
+      <div class="res-title">Strut geometry &amp; capacity</div>
+      <table class="res-table">
+        <tr><td>Strut angle θ</td><td>${fmt(theta_strut,1)}°</td></tr>
+        <tr><td>EC2 min angle (21.8°)</td><td class="${theta_strut>=21.8?'c-pass':'c-fail'}">${theta_strut>=21.8?'PASS':'FAIL'}</td></tr>
+        <tr><td>Effective strut strength f<sub>cd,eff</sub></td><td>${fmt(fcd_eff,2)} MPa</td></tr>
+        <tr><td>Strut force F<sub>strut</sub></td><td>${fmt(Fstrut/1e3,1)} kN</td></tr>
+        <tr><td>Strut utilisation</td><td class="${strut_util<=1?'c-pass':'c-fail'}">${fmt(strut_util*100,1)}%</td></tr>
+      </table>
+    </div>
+  `;
+
+  // ── Shear tab ──
+  document.getElementById('shear-content').innerHTML = `
+    <div class="res-section">
+      <div class="res-title">Punching shear — EC2 §6.4.3</div>
+      <table class="res-table">
+        <tr><td>Control perimeter u₁ (at 2d)</td><td>${fmt(u1,0)} mm</td></tr>
+        <tr><td>Applied v<sub>Ed</sub></td><td>${fmt(vEd_punch,3)} MPa</td></tr>
+        <tr><td>Size factor k</td><td>${fmt(k_punch,3)}</td></tr>
+        <tr><td>Flexural reinforcement ratio ρ<sub>l</sub></td><td>${fmt(rho_l*100,3)}%</td></tr>
+        <tr><td>v<sub>Rd,c</sub></td><td>${fmt(vRd_c,3)} MPa</td></tr>
+        <tr><td>Utilisation</td><td class="${punch_util<=1?'c-pass':'c-fail'}">${fmt(punch_util*100,1)}% → ${punch_util<=1?'PASS':'FAIL'}</td></tr>
+      </table>
+    </div>
+    <div class="res-section">
+      <div class="res-title">Beam shear — EC2 §6.2.2</div>
+      <table class="res-table">
+        <tr><td>Shear span a<sub>v</sub></td><td>${fmt(Math.max(av,0),0)} mm</td></tr>
+        <tr><td>Enhancement factor β (a<sub>v</sub>/2d)</td><td>${fmt(beta_shear,3)}</td></tr>
+        <tr><td>v<sub>Ed</sub> (enhanced)</td><td>${fmt(vEd_beam*beta_shear,3)} MPa</td></tr>
+        <tr><td>v<sub>Rd,c</sub> (beam, enhanced)</td><td>${fmt(vRd_c_beam,3)} MPa</td></tr>
+        <tr><td>Utilisation</td><td class="${beam_util<=1?'c-pass':'c-fail'}">${fmt(beam_util*100,1)}% → ${beam_util<=1?'PASS':'FAIL'}</td></tr>
+      </table>
+    </div>
+    ${av <= 0 ? '<div class="warn-box">⚠ Shear span aᵥ ≤ 0: pile centre lies within the column zone. Check geometry — consider increasing cap depth or reducing pile spacing.</div>' : ''}
+    ${minPile < 0 ? '<div class="warn-box">⚠ Tension detected in one or more piles. Verify pile tension capacity and connection detail.</div>' : ''}
+  `;
+
+  // ── Summary tab ──
+  const checks = [
+    { name: 'Pile force ≤ R<sub>d</sub>',           util: maxPile/Rd,         pass: maxPile<=Rd          },
+    { name: 'Tension tie reinforcement (x-dir)',   util: As_util,             pass: As_util<=1            },
+    { name: 'Strut angle ≥ 21.8°',                 util: 21.8/theta_strut,   pass: theta_strut>=21.8     },
+    { name: 'Strut capacity',                       util: strut_util,          pass: strut_util<=1         },
+    { name: 'Punching shear (§6.4)',                util: punch_util,          pass: punch_util<=1         },
+    { name: 'Beam shear — enhanced (§6.2)',         util: beam_util,           pass: beam_util<=1          },
+  ];
+  const allPass = checks.every(c => c.pass);
+
+  document.getElementById('summary-content').innerHTML = `
+    <div class="overall-banner ${allPass?'banner-pass':'banner-fail'}">
+      ${allPass ? '✓ ALL CHECKS PASS' : '✗ ONE OR MORE CHECKS FAIL — REVISE DESIGN'}
+    </div>
+    <div class="check-list">
+      ${checks.map(c=>`
+        <div class="check-row">
+          <span class="check-name">${c.name}</span>
+          <div class="check-right">
+            <span class="check-util">${fmt(c.util*100,1)}%</span>
+            <span class="badge ${c.pass?'badge-pass':'badge-fail'}">${c.pass?'PASS':'FAIL'}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="res-section">
+      <div class="res-title">Cap dimensions</div>
+      <table class="res-table">
+        <tr><td>Plan L<sub>x</sub></td><td>${fmt(Lx,0)} mm (${fmt(Lx/1000,2)} m)</td></tr>
+        <tr><td>Plan L<sub>y</sub></td><td>${fmt(Ly,0)} mm (${fmt(Ly/1000,2)} m)</td></tr>
+        <tr><td>Depth h</td><td>${h} mm</td></tr>
+        <tr><td>Estimated self-weight</td><td>${fmt(selfWt,1)} kN</td></tr>
+        <tr><td>Concrete</td><td>C${fckN}/— · f<sub>cd</sub> = ${fmt(fcd,1)} MPa</td></tr>
+        <tr><td>Min pile force</td><td class="${minPile<0?'c-warn':''}">${fmt(minPile,1)} kN ${minPile<0?'⚠ tension':''}</td></tr>
+      </table>
+    </div>
+  `;
+}
+
+// ── SVG diagram ──
+function drawCap(pileCoords, phi, Lx, Ly, c1, c2, pileForces, maxPile, Rd) {
+  const svg = document.getElementById('cap-svg');
+  const W = 380, H = 380, pad = 44;
+  const maxDim = Math.max(Lx, Ly);
+  const scale  = (Math.min(W,H) - 2*pad) / maxDim;
+
+  const tx = x => W/2 + x*scale;
+  const ty = y => H/2 + y*scale;
+
+  const pileCol = f => {
+    if (f < 0)      return { stroke:'#e05050', fill:'rgba(224,80,80,0.12)' };
+    if (f/Rd > 1.0) return { stroke:'#e05050', fill:'rgba(224,80,80,0.15)' };
+    if (f/Rd > 0.85)return { stroke:'#e0a030', fill:'rgba(224,160,48,0.12)' };
+    return { stroke:'#3dba6e', fill:'rgba(61,186,110,0.12)' };
+  };
+
+  // cap outline
+  let s = '';
+  const cx = tx(-Lx/2), cy = ty(-Ly/2);
+  const cw = Lx*scale, ch = Ly*scale;
+
+  // hatching
+  s += `<defs>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    </pattern>
+  </defs>`;
+
+  // Cap fill
+  s += `<rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="5" fill="url(#hatch)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>`;
+
+  // Tie lines (strut-and-tie sketch)
+  const tieStyle = 'stroke="rgba(240,165,0,0.3)" stroke-width="0.75" stroke-dasharray="4 3"';
+  const n = pileCoords.length;
+  for(let a=0;a<n;a++) for(let b=a+1;b<n;b++){
+    s += `<line x1="${tx(pileCoords[a][0])}" y1="${ty(pileCoords[a][1])}" x2="${tx(pileCoords[b][0])}" y2="${ty(pileCoords[b][1])}" ${tieStyle}/>`;
+  }
+
+  // Column
+  s += `<rect x="${tx(-c1/2)}" y="${ty(-c2/2)}" width="${c1*scale}" height="${c2*scale}" rx="2" fill="rgba(240,165,0,0.15)" stroke="#f0a500" stroke-width="1.5"/>`;
+  s += `<text x="${W/2}" y="${H/2+1}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#f0a500" font-family="monospace">col</text>`;
+
+  // Piles
+  pileCoords.forEach((p, i) => {
+    const px = tx(p[0]), py = ty(p[1]);
+    const r  = Math.max(phi*scale/2, 10);
+    const col = pileCol(pileForces[i]);
+    s += `<circle cx="${px}" cy="${py}" r="${r}" fill="${col.fill}" stroke="${col.stroke}" stroke-width="1.5"/>`;
+    s += `<text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="central" font-size="9" fill="${col.stroke}" font-family="monospace">P${i+1}</text>`;
+    // Force label
+    const lx2 = px + r + 4;
+    const ly2 = py - r - 3;
+    s += `<text x="${px}" y="${py-r-5}" text-anchor="middle" font-size="9" fill="${col.stroke}" font-family="monospace">${pileForces[i].toFixed(0)}kN</text>`;
+  });
+
+  // Dimension line (bottom)
+  const dimY = ty(Math.max(...pileCoords.map(p=>p[1]))/1 + phi/2) + 18;
+  const x0 = tx(-Lx/2), x1 = tx(Lx/2);
+  s += `<line x1="${x0}" y1="${dimY}" x2="${x1}" y2="${dimY}" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>`;
+  s += `<line x1="${x0}" y1="${dimY-3}" x2="${x0}" y2="${dimY+3}" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>`;
+  s += `<line x1="${x1}" y1="${dimY-3}" x2="${x1}" y2="${dimY+3}" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>`;
+  s += `<text x="${W/2}" y="${dimY+11}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.35)" font-family="monospace">${(Lx/1000).toFixed(2)}m × ${(Ly/1000).toFixed(2)}m</text>`;
+
+  // Legend
+  const leg = H - 14;
+  [[14,'#3dba6e','≤85%'],[55,'#e0a030','≤100%'],[100,'#e05050','>100%']].forEach(([lx3,col,lbl])=>{
+    s += `<circle cx="${lx3}" cy="${leg}" r="4" fill="${col}" fill-opacity="0.2" stroke="${col}" stroke-width="1"/>`;
+    s += `<text x="${lx3+7}" y="${leg}" dominant-baseline="central" font-size="8" fill="rgba(255,255,255,0.35)" font-family="monospace">${lbl}</text>`;
+  });
+
+  svg.innerHTML = s;
+}
+
+calc();
+</script>
+</body>
+</html>
